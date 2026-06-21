@@ -1,13 +1,33 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import GameLayout from '../components/GameLayout';
-import { loadPuzzle } from './sudoku.logic';
-import type { CellState, Difficulty } from './sudoku.types';
+import { applyHint, loadPuzzle, setCellValue, toggleNote, validateBoard } from './sudoku.logic';
+import type { Board, CellState, Difficulty } from './sudoku.types';
 import styles from './SudokuGame.module.css';
 
 function toDifficulty(s: string | undefined): Difficulty {
   if (s === 'medium' || s === 'hard') return s;
   return 'easy';
+}
+
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function renderCellContent(cell: CellState) {
+  if (cell.value !== 0) return cell.value;
+  if (cell.notes.length === 0) return null;
+  return (
+    <div className={styles.notes}>
+      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+        <span key={n} className={styles.note}>
+          {cell.notes.includes(n) ? n : null}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 function cellClassName(
@@ -37,14 +57,135 @@ function cellClassName(
 
 export default function SudokuGame() {
   const { difficulty } = useParams<{ difficulty: string }>();
-  const [board] = useState<CellState[][]>(() => loadPuzzle(toDifficulty(difficulty)).board);
-  const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
 
+  const [gameData] = useState<{ board: CellState[][]; solution: Board }>(() =>
+    loadPuzzle(toDifficulty(difficulty))
+  );
+  const [board, setBoard] = useState<CellState[][]>(gameData.board);
+  const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
+  const [notesMode, setNotesMode] = useState(false);
+  const [undoStack, setUndoStack] = useState<CellState[][][]>([]);
+  const [mistakes, setMistakes] = useState(0);
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  const timerStartedRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    },
+    []
+  );
+
+  const startTimer = useCallback(() => {
+    if (timerStartedRef.current) return;
+    timerStartedRef.current = true;
+    timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
+  }, []);
+
+  // Derived — used for button disabled states and highlight logic
   const [sr, sc] = selectedCell ?? [-1, -1];
-  const selectedValue = selectedCell ? board[sr][sc].value : 0;
+  const sel = selectedCell ? board[sr][sc] : null;
+  const canPick = sel !== null && !sel.given;
+  const canHint = sel !== null && !sel.given && sel.value !== gameData.solution[sr][sc];
+  const selectedValue = sel?.value ?? 0;
+
+  const pick = useCallback(
+    (num: number) => {
+      if (!selectedCell) return;
+      const [row, col] = selectedCell;
+      const cell = board[row][col];
+      if (cell.given) return;
+
+      if (num === 0) {
+        if (cell.value === 0 && cell.notes.length === 0) return;
+        const cleared = board.map((r, ri) =>
+          ri === row
+            ? r.map((c, ci) => (ci === col ? { ...c, value: 0, notes: [], error: false } : c))
+            : r
+        );
+        setUndoStack((s) => [...s, board]);
+        setBoard(validateBoard(cleared));
+        return;
+      }
+
+      if (notesMode) {
+        setUndoStack((s) => [...s, board]);
+        setBoard(toggleNote(board, row, col, num));
+      } else {
+        if (cell.value === num) return;
+        setUndoStack((s) => [...s, board]);
+        setBoard(validateBoard(setCellValue(board, row, col, num)));
+        if (num !== gameData.solution[row][col]) {
+          setMistakes((m) => m + 1);
+        }
+      }
+    },
+    [selectedCell, board, notesMode, gameData]
+  );
+
+  const undo = useCallback(() => {
+    if (undoStack.length === 0) return;
+    setBoard(undoStack[undoStack.length - 1]);
+    setUndoStack((s) => s.slice(0, -1));
+  }, [undoStack]);
+
+  const hint = useCallback(() => {
+    if (!selectedCell) return;
+    const [row, col] = selectedCell;
+    const cell = board[row][col];
+    if (cell.given) return;
+    if (cell.value === gameData.solution[row][col]) return;
+    setUndoStack((s) => [...s, board]);
+    setBoard(applyHint(board, gameData.solution, row, col));
+    setHintsUsed((h) => h + 1);
+  }, [selectedCell, board, gameData]);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        startTimer();
+        setSelectedCell((prev) => {
+          if (!prev) return [0, 0];
+          const [r, c] = prev;
+          if (e.key === 'ArrowUp') return [Math.max(0, r - 1), c];
+          if (e.key === 'ArrowDown') return [Math.min(8, r + 1), c];
+          if (e.key === 'ArrowLeft') return [r, Math.max(0, c - 1)];
+          return [r, Math.min(8, c + 1)];
+        });
+        return;
+      }
+      if (e.key >= '1' && e.key <= '9') {
+        pick(parseInt(e.key, 10));
+        return;
+      }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        pick(0);
+        return;
+      }
+      if (e.key === 'n') {
+        setNotesMode((m) => !m);
+        return;
+      }
+      if (e.key === 'z') {
+        e.preventDefault();
+        undo();
+        return;
+      }
+      if (e.key === 'h') {
+        hint();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [startTimer, pick, undo, hint]);
 
   return (
     <GameLayout>
+      {/* Board */}
       <div className={styles.board} data-testid="sudoku-board">
         {board.flatMap((row, r) =>
           row.map((cell, c) => {
@@ -63,16 +204,95 @@ export default function SudokuGame() {
                 key={`${r}-${c}`}
                 className={cellClassName(cell, isSelected, isPeer, isSameValue, r, c)}
                 data-testid={`cell-${r}-${c}`}
-                onClick={() => setSelectedCell([r, c])}
+                onClick={() => {
+                  startTimer();
+                  setSelectedCell([r, c]);
+                }}
                 aria-invalid={cell.error}
                 aria-pressed={isSelected}
                 aria-label={`Row ${r + 1}, column ${c + 1}${cell.value ? `, ${cell.value}` : ''}`}
               >
-                {cell.value !== 0 ? cell.value : ''}
+                {renderCellContent(cell)}
               </button>
             );
           })
         )}
+      </div>
+
+      {/* Controls */}
+      <div className={styles.controls}>
+        {/* Stats */}
+        <div className={styles.stats}>
+          <span>
+            <span className={styles.statLabel}>Time </span>
+            <span className={styles.statValue} data-testid="timer-display">
+              {formatTime(elapsedSeconds)}
+            </span>
+          </span>
+          <span>
+            <span className={styles.statLabel}>Mistakes </span>
+            <span className={styles.statValue} data-testid="mistake-counter">
+              {mistakes}
+            </span>
+          </span>
+          <span>
+            <span className={styles.statLabel}>Hints </span>
+            <span className={styles.statValue} data-testid="hint-counter">
+              {hintsUsed}
+            </span>
+          </span>
+        </div>
+
+        {/* Action bar */}
+        <div className={styles.actionBar}>
+          <button
+            className={`${styles.actionBtn}${notesMode ? ` ${styles.actionBtnActive}` : ''}`}
+            data-testid="notes-toggle"
+            onClick={() => setNotesMode((m) => !m)}
+            aria-pressed={notesMode}
+          >
+            Notes
+          </button>
+          <button
+            className={styles.actionBtn}
+            data-testid="undo-button"
+            onClick={undo}
+            disabled={undoStack.length === 0}
+          >
+            Undo
+          </button>
+          <button
+            className={styles.actionBtn}
+            data-testid="hint-button"
+            onClick={hint}
+            disabled={!canHint}
+          >
+            Hint
+          </button>
+        </div>
+
+        {/* Number picker */}
+        <div className={styles.picker}>
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+            <button
+              key={n}
+              className={styles.pickerBtn}
+              data-testid={`pick-${n}`}
+              onClick={() => pick(n)}
+              disabled={!canPick}
+            >
+              {n}
+            </button>
+          ))}
+          <button
+            className={styles.pickerBtn}
+            data-testid="pick-erase"
+            onClick={() => pick(0)}
+            disabled={!canPick}
+          >
+            ✕
+          </button>
+        </div>
       </div>
     </GameLayout>
   );

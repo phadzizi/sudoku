@@ -1,4 +1,5 @@
-import type { Board, Difficulty, Puzzle, Rng } from './sudoku.types';
+import type { Board, CellState, Difficulty, Puzzle, Rng } from './sudoku.types';
+import { PUZZLES } from './puzzles';
 
 export type { Rng };
 
@@ -139,4 +140,118 @@ export function stringToBoard(s: string): Board {
     board.push(Array.from({ length: 9 }, (_, c) => parseInt(s[r * 9 + c], 10)));
   }
   return board;
+}
+
+export function loadPuzzle(
+  difficulty: Difficulty,
+  rng: Rng = Math.random
+): { board: CellState[][]; solution: Board } {
+  const pool = PUZZLES[difficulty];
+  const { clues, solution: solutionStr } = pool[Math.floor(rng() * pool.length)];
+  const solution = stringToBoard(solutionStr);
+  const board: CellState[][] = stringToBoard(clues).map((row) =>
+    row.map((value) => ({ value, given: value !== 0, notes: [], error: false }))
+  );
+  return { board, solution };
+}
+
+export function setCellValue(
+  grid: CellState[][],
+  row: number,
+  col: number,
+  value: number
+): CellState[][] {
+  if (grid[row][col].given) return grid;
+  return grid.map((r, ri) =>
+    ri === row
+      ? r.map((cell, ci) =>
+          ci === col ? { ...cell, value, notes: value !== 0 ? [] : cell.notes } : cell
+        )
+      : r
+  );
+}
+
+export function toggleNote(
+  grid: CellState[][],
+  row: number,
+  col: number,
+  note: number
+): CellState[][] {
+  const cell = grid[row][col];
+  if (cell.given || cell.value !== 0) return grid;
+  const notes = cell.notes.includes(note)
+    ? cell.notes.filter((n) => n !== note)
+    : [...cell.notes, note].sort((a, b) => a - b);
+  return grid.map((r, ri) =>
+    ri === row ? r.map((c, ci) => (ci === col ? { ...c, notes } : c)) : r
+  );
+}
+
+export function validateBoard(grid: CellState[][]): CellState[][] {
+  const next = grid.map((row) => row.map((cell) => ({ ...cell, error: false })));
+
+  function mark(cells: [number, number][]): void {
+    const seen = new Map<number, [number, number][]>();
+    for (const [r, c] of cells) {
+      const v = next[r][c].value;
+      if (v === 0) continue;
+      const bucket = seen.get(v) ?? [];
+      bucket.push([r, c]);
+      seen.set(v, bucket);
+    }
+    for (const dupes of seen.values()) {
+      if (dupes.length > 1) {
+        for (const [r, c] of dupes) next[r][c] = { ...next[r][c], error: true };
+      }
+    }
+  }
+
+  for (let i = 0; i < 9; i++) {
+    mark(Array.from({ length: 9 }, (_, j) => [i, j] as [number, number]));
+    mark(Array.from({ length: 9 }, (_, j) => [j, i] as [number, number]));
+  }
+  for (let br = 0; br < 3; br++) {
+    for (let bc = 0; bc < 3; bc++) {
+      const cells: [number, number][] = [];
+      for (let r = br * 3; r < br * 3 + 3; r++)
+        for (let c = bc * 3; c < bc * 3 + 3; c++) cells.push([r, c]);
+      mark(cells);
+    }
+  }
+  return next;
+}
+
+export function isBoardComplete(grid: CellState[][]): boolean {
+  return grid.every((row) => row.every((cell) => cell.value !== 0 && !cell.error));
+}
+
+const BASE_SCORES: Record<Difficulty, number> = { easy: 1000, medium: 2000, hard: 3000 };
+
+export function calculateScore(
+  difficulty: Difficulty,
+  elapsedSeconds: number,
+  mistakes: number,
+  hintsUsed: number
+): number {
+  const base = BASE_SCORES[difficulty];
+  const timeBonus = Math.max(0, 500 - elapsedSeconds);
+  return Math.max(0, base + timeBonus - mistakes * 50 - hintsUsed * 100);
+}
+
+export function getHint(_grid: CellState[][], solution: Board, row: number, col: number): number {
+  return solution[row][col];
+}
+
+export function applyHint(
+  grid: CellState[][],
+  solution: Board,
+  row: number,
+  col: number
+): CellState[][] {
+  const value = solution[row][col];
+  return grid.map((r, ri) =>
+    ri === row
+      ? r.map((cell, ci) => (ci === col ? { value, given: true, notes: [], error: false } : cell))
+      : r
+  );
 }

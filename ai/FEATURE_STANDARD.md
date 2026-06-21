@@ -30,10 +30,10 @@ export type GameStatus = 'idle' | 'playing' | 'paused' | 'complete';
 export type Board = number[][];
 
 export type CellState = {
-  value: number;       // 0 = empty
-  given: boolean;      // true = part of the original puzzle, not editable
-  notes: number[];     // pencil-mark candidates (0–9)
-  error: boolean;      // true = conflicts with another cell
+  value: number; // 0 = empty
+  given: boolean; // true = part of the original puzzle, not editable
+  notes: number[]; // pencil-mark candidates (0–9)
+  error: boolean; // true = conflicts with another cell
 };
 
 export type GameState = {
@@ -44,7 +44,7 @@ export type GameState = {
   selectedCell: [number, number] | null;
   elapsedSeconds: number;
   mistakes: number;
-  bestTime: number | null;  // per difficulty, in seconds
+  bestTime: number | null; // per difficulty, in seconds
 };
 ```
 

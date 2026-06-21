@@ -51,17 +51,17 @@ npm run test:e2e     # Playwright end-to-end tests
 
 ## AI delivery framework
 
-| File                                               | Purpose                          |
-| -------------------------------------------------- | -------------------------------- |
-| [`AGENTS.md`](AGENTS.md)                           | Agent workflow and rules         |
-| [`ai/GOOD_CODE_STANDARD.md`](ai/GOOD_CODE_STANDARD.md) | What "good code" means here |
+| File                                                             | Purpose                          |
+| ---------------------------------------------------------------- | -------------------------------- |
+| [`AGENTS.md`](AGENTS.md)                                         | Agent workflow and rules         |
+| [`ai/GOOD_CODE_STANDARD.md`](ai/GOOD_CODE_STANDARD.md)           | What "good code" means here      |
 | [`ai/TASK_BREAKDOWN_PROTOCOL.md`](ai/TASK_BREAKDOWN_PROTOCOL.md) | How to break features into tasks |
-| [`ai/FEATURE_STANDARD.md`](ai/FEATURE_STANDARD.md) | Architecture rules              |
-| [`ai/DEFINITION_OF_DONE.md`](ai/DEFINITION_OF_DONE.md) | Checklist before any PR     |
-| [`ai/UI_DESIGN_STANDARD.md`](ai/UI_DESIGN_STANDARD.md) | Design tokens and patterns  |
-| [`ai/MOBILE_WEB_TESTING.md`](ai/MOBILE_WEB_TESTING.md) | Testing protocol            |
-| [`ai/SELF_REVIEW_PROMPT.md`](ai/SELF_REVIEW_PROMPT.md) | Agent self-review protocol  |
-| [`ai/tasks/`](ai/tasks/)                           | Per-feature task specs           |
+| [`ai/FEATURE_STANDARD.md`](ai/FEATURE_STANDARD.md)               | Architecture rules               |
+| [`ai/DEFINITION_OF_DONE.md`](ai/DEFINITION_OF_DONE.md)           | Checklist before any PR          |
+| [`ai/UI_DESIGN_STANDARD.md`](ai/UI_DESIGN_STANDARD.md)           | Design tokens and patterns       |
+| [`ai/MOBILE_WEB_TESTING.md`](ai/MOBILE_WEB_TESTING.md)           | Testing protocol                 |
+| [`ai/SELF_REVIEW_PROMPT.md`](ai/SELF_REVIEW_PROMPT.md)           | Agent self-review protocol       |
+| [`ai/tasks/`](ai/tasks/)                                         | Per-feature task specs           |
 
 ## Contact
 

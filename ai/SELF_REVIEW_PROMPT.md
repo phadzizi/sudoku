@@ -30,17 +30,17 @@ If any criterion is PARTIAL or FAIL, fix it before continuing.
 
 Review the diff against `/ai/GOOD_CODE_STANDARD.md`:
 
-| Area          | What to look for                                                   |
-| ------------- | ------------------------------------------------------------------ |
-| Complexity    | Can any function be simplified?                                    |
-| Naming        | Do names explain intent without needing a comment?                 |
-| Duplication   | Is any logic copy-pasted instead of extracted?                     |
-| Types         | Is `any` used anywhere? Are all props typed?                       |
-| Separation    | Is business logic inside JSX? Move it to logic file.               |
-| Tests         | Are edge cases covered? Would a new failure go undetected?         |
-| Cleanup       | Are all timers and subscriptions cleaned up?                       |
-| Accessibility | Are cells keyboard-navigable? Arrow keys, number keys, delete?     |
-| Mobile        | Does the grid fit at 320px? Is the number picker fully visible?    |
+| Area          | What to look for                                                |
+| ------------- | --------------------------------------------------------------- |
+| Complexity    | Can any function be simplified?                                 |
+| Naming        | Do names explain intent without needing a comment?              |
+| Duplication   | Is any logic copy-pasted instead of extracted?                  |
+| Types         | Is `any` used anywhere? Are all props typed?                    |
+| Separation    | Is business logic inside JSX? Move it to logic file.            |
+| Tests         | Are edge cases covered? Would a new failure go undetected?      |
+| Cleanup       | Are all timers and subscriptions cleaned up?                    |
+| Accessibility | Are cells keyboard-navigable? Arrow keys, number keys, delete?  |
+| Mobile        | Does the grid fit at 320px? Is the number picker fully visible? |
 
 ---
 

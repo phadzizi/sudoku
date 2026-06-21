@@ -37,9 +37,15 @@ All visual values live in `src/styles/tokens.css`. Never hard-code a color, spac
 
 ```css
 :root {
-  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;
-  --space-4: 16px;  --space-5: 20px;  --space-6: 24px;
-  --space-8: 32px;  --space-10: 40px; --space-12: 48px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
   --space-16: 64px;
 }
 ```
@@ -50,14 +56,23 @@ All visual values live in `src/styles/tokens.css`. Never hard-code a color, spac
 :root {
   --font-family: 'Inter', system-ui, -apple-system, sans-serif;
 
-  --text-xs: 12px;   --text-sm: 14px;   --text-base: 16px;
-  --text-lg: 18px;   --text-xl: 20px;   --text-2xl: 24px;
-  --text-3xl: 30px;  --text-4xl: 36px;  --text-5xl: 48px;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 36px;
+  --text-5xl: 48px;
 
-  --font-normal: 400; --font-medium: 500;
-  --font-semibold: 600; --font-bold: 700;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
 
-  --leading-tight: 1.25; --leading-normal: 1.5;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
 }
 ```
 
@@ -65,8 +80,11 @@ All visual values live in `src/styles/tokens.css`. Never hard-code a color, spac
 
 ```css
 :root {
-  --radius-sm: 6px; --radius-md: 12px; --radius-lg: 16px;
-  --radius-xl: 24px; --radius-full: 9999px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
 }
 ```
 
@@ -169,7 +187,9 @@ Font:     var(--font-semibold)
 
 ```css
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }

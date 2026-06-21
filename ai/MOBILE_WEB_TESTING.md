@@ -72,8 +72,7 @@ export default defineConfig({
       use: {
         browserName: 'chromium',
         viewport: { width: 390, height: 844 },
-        userAgent:
-          'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
       },
     },
     { name: 'tablet', use: { ...devices['iPad'] } },

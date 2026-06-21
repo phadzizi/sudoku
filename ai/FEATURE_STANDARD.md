@@ -154,18 +154,30 @@ export * from './sudoku.logic';
 
 ---
 
+## Scoring formula
+
+```
+base(easy) = 1000 | base(medium) = 2000 | base(hard) = 3000
+timeBonus  = max(0, 500 − elapsedSeconds)
+score      = max(0, base + timeBonus − mistakes × 50 − hintsUsed × 100)
+```
+
+Implemented in `calculateScore(difficulty, elapsedSeconds, mistakes, hintsUsed): number`.
+
+---
+
 ## Storage
 
 Use the shared storage service at `src/services/storage.ts`. Never call `localStorage` directly from a component or logic file.
 
-Best time shape (one record per difficulty):
+Best score shape (one record per difficulty):
 
 ```ts
-export type BestTime = {
-  difficulty: Difficulty;
-  seconds: number;
+export type BestScore = {
+  score: number;
   achievedAt: string; // ISO date string
 };
 ```
 
 Storage keys: `sudoku:best:easy`, `sudoku:best:medium`, `sudoku:best:hard`
+In-progress keys: `sudoku:progress:easy`, `sudoku:progress:medium`, `sudoku:progress:hard`

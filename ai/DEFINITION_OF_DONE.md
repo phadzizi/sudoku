@@ -26,21 +26,19 @@ A feature is done only when every item below is checked. If any item is unchecke
 
 - [ ] Follows `ai/UI_DESIGN_STANDARD.md` — no hard-coded colors, spacing, or font sizes
 - [ ] Uses design tokens from `src/styles/tokens.css`
-- [ ] Uses shared components: `GameLayout`, `PrimaryButton`, `ScoreDisplay`
+- [ ] Uses shared components where they exist
 - [ ] All interactive elements are minimum 44×44px tap target
-- [ ] Sudoku grid cells are large enough to tap accurately on 320px screen
 - [ ] No hover-only interactions
 - [ ] Focus ring visible on all focusable elements
 - [ ] `prefers-reduced-motion` respected for all animations
-- [ ] Error cells indicated by more than color alone (border, icon, or pattern)
+- [ ] Color is not the sole indicator of state (border, icon, or text also used)
 - [ ] Completed `ai/UI_DESIGN_STANDARD.md` section 9 checklist
 
 ## Mobile & web
 
 - [ ] No horizontal scroll at 320px viewport width
-- [ ] Grid fully visible at 320px without horizontal scroll
 - [ ] Content centered and not stretched at 1280px viewport width
-- [ ] `data-testid` attributes on: board grid, selected cell, number picker buttons, timer, start/replay button, game-over screen
+- [ ] `data-testid` attributes on all key interactive and state elements
 - [ ] Playwright E2E happy-path passes at `mobile-sm` (360px)
 - [ ] Playwright E2E happy-path passes at `mobile-lg` (390px)
 - [ ] Playwright E2E happy-path passes at `tablet` (768px)
@@ -58,9 +56,9 @@ A feature is done only when every item below is checked. If any item is unchecke
 
 ## Unit & component tests
 
-- [ ] Unit tests cover: puzzle generation, board validation, completion check, score calculation
-- [ ] Edge cases tested: empty board, completed board, conflicting cells, given cells cannot be changed
-- [ ] E2E happy-path test exists
+- [ ] Unit tests cover pure logic
+- [ ] Edge cases are tested
+- [ ] E2E happy-path test exists for new screens
 
 ## PR
 

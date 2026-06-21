@@ -14,10 +14,9 @@ For every feature, break work into these task groups before writing a single lin
 
 ## Phase 2 — Design
 
-- Define game state shape (types)
-- Define game events and transitions
+- Define state shape (types)
+- Define events and transitions
 - Define scoring rules
-- Define difficulty progression
 - Define storage needs (what to persist, how)
 - Define sound and animation needs
 
@@ -25,10 +24,10 @@ For every feature, break work into these task groups before writing a single lin
 
 Execute in this order to keep the code always in a working state:
 
-1. Types file (`sudoku.types.ts`)
-2. Logic file with pure functions (`sudoku.logic.ts`)
-3. Unit tests for logic (`sudoku.test.ts`)
-4. UI component (`SudokuGame.tsx`)
+1. Types file
+2. Logic file with pure functions
+3. Unit tests for logic
+4. UI component
 5. Route/page entry
 6. Storage integration
 7. Sound/animation (if needed)
@@ -48,7 +47,7 @@ Execute in this order to keep the code always in a working state:
 - Remove dead code
 - Rename unclear identifiers
 - Simplify component state
-- Check mobile layout at 320px (grid must be fully visible and tappable)
+- Check mobile layout at 320px
 - Check timer/subscription cleanup
 
 ## Phase 6 — PR
@@ -67,12 +66,12 @@ When breaking down a feature, output tasks like this before coding:
 ```
 Implementation tasks
 
-[ ] 1. Create src/sudoku/sudoku.types.ts
-[ ] 2. Create src/sudoku/sudoku.logic.ts — puzzle generation, validation, scoring
-[ ] 3. Add unit tests in sudoku.test.ts
-[ ] 4. Create SudokuGame.tsx — board grid, cell selection, number picker
-[ ] 5. Add route in App.tsx
-[ ] 6. Add best-time persistence via storage service
+[ ] 1. Create types file
+[ ] 2. Create logic file — core functions
+[ ] 3. Add unit tests
+[ ] 4. Create UI component
+[ ] 5. Add route
+[ ] 6. Add storage integration
 [ ] 7. Add Playwright happy-path test
 [ ] 8. Run npm run check and fix all failures
 [ ] 9. Self-review using /ai/SELF_REVIEW_PROMPT.md

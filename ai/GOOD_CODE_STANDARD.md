@@ -23,11 +23,11 @@ Functions should be small and focused. Comments are only added when the WHY is n
 
 ## 4. Modular
 
-Game logic must be separated from UI.
+Logic must be separated from UI.
 
-- `SudokuGame.tsx` — renders UI, calls logic, handles events
-- `sudoku.logic.ts` — pure functions: puzzle generation, validation, scoring
-- `sudoku.types.ts` — TypeScript types only
+- `FeatureGame.tsx` — renders UI, calls logic, handles events
+- `feature.logic.ts` — pure functions: generation, validation, scoring
+- `feature.types.ts` — TypeScript types only
 
 No business logic inside JSX. No React imports in logic files.
 
@@ -41,11 +41,10 @@ Do not write code that is impossible to test without a browser, network, or real
 
 Avoid `any`. Use TypeScript types for:
 
-- board state
-- cell state
-- difficulty levels
-- game status
+- state shapes
+- events
 - score results
+- difficulty levels
 - storage models
 - component props
 
@@ -54,7 +53,7 @@ Avoid `any`. Use TypeScript types for:
 - Buttons must be real `<button>` elements
 - Interactive elements must be keyboard usable
 - Text must be readable at default font sizes
-- Color must not be the only indicator of state (error cells must also use an icon or border change)
+- Color must not be the only indicator of state
 - Sound must be optional and off by default
 
 ## 8. Mobile-friendly
@@ -66,12 +65,12 @@ Every feature must work on:
 - Touch input
 - Mouse input
 
-The Sudoku grid must be playable on a 320px screen — cells must be large enough to tap accurately. Use large touch targets (minimum 44×44px for controls). Do not rely on right-click or hover.
+Avoid hover-only interactions. Use large touch targets (minimum 44×44px). Do not rely on right-click.
 
 ## 9. Performant enough
 
 - Avoid unnecessary re-renders (use `useMemo`, `useCallback` where it genuinely helps)
-- Puzzle generation runs once per game start — never during render
+- Avoid storing large objects in state
 - Clear intervals and timeouts in cleanup functions
 - Do not store derived data that can be computed from existing state
 

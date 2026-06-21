@@ -13,35 +13,35 @@ Every feature must be mechanically verified at multiple viewports before PR.
 | `tablet`    | 768px  | 1024px | iPad portrait             |
 | `desktop`   | 1280px | 800px  | Laptop                    |
 
-Configure this in `playwright.config.ts` — see section 3.
+Configure this in `playwright.config.ts`.
 
 ---
 
-## 2. What Playwright must cover
+## 2. What Playwright must cover for every new screen or feature
 
 ### Happy path (required)
 
-1. Navigate to the game screen
-2. Select a difficulty and start
-3. Select an empty cell
-4. Enter a correct number
-5. Verify the number appears in the cell
-6. Enter an incorrect number — verify error state is shown
-7. Complete (or simulate completion of) the puzzle
-8. Verify the completion screen shows time and score
-9. Tap Play Again — verify a new puzzle starts
+1. Navigate to the screen
+2. Complete the primary user action
+3. Verify the expected outcome
+4. Verify score / state updates where applicable
+5. Verify any error or edge-case path
+6. Verify reset / replay / back navigation
 
 This test must pass at **all four viewports**.
 
 ### Viewport-specific assertions
 
 At `mobile-sm` (360px), additionally assert:
+
 - No horizontal scrollbar (`document.body.scrollWidth <= 360`)
-- Sudoku grid fully visible without scrolling
-- Number picker buttons visible without scrolling
+- All primary controls visible without scrolling
+- Score / status display visible
 
 At `desktop` (1280px), additionally assert:
-- Game content is centered and not stretched beyond `max-width: 480px`
+
+- Content is centered and not stretched beyond `max-width`
+- No layout elements are misaligned
 
 ---
 
@@ -72,7 +72,8 @@ export default defineConfig({
       use: {
         browserName: 'chromium',
         viewport: { width: 390, height: 844 },
-        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
+        userAgent:
+          'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
       },
     },
     { name: 'tablet', use: { ...devices['iPad'] } },
@@ -88,22 +89,9 @@ export default defineConfig({
 
 ---
 
-## 4. Shared test selectors
+## 4. Shared test selectors rule
 
-Use `data-testid` on key elements:
-
-| Element               | `data-testid`              |
-| --------------------- | -------------------------- |
-| Board grid            | `sudoku-board`             |
-| Individual cell       | `cell-{row}-{col}`         |
-| Number picker         | `number-picker`            |
-| Number button         | `pick-{n}` (1–9)           |
-| Erase button          | `pick-erase`               |
-| Timer display         | `timer-display`            |
-| Mistake counter       | `mistake-counter`          |
-| Start / Play Again    | `start-button`             |
-| Game complete screen  | `game-complete-screen`     |
-| Difficulty selector   | `difficulty-{easy|medium|hard}` |
+Use `data-testid` attributes on key elements — never CSS selectors or text content that can change. Define `data-testid` values in the task spec for each feature.
 
 ---
 
@@ -121,6 +109,8 @@ export async function assertNoHorizontalScroll(page: Page) {
 }
 ```
 
+Call it in every test after significant interactions.
+
 ---
 
 ## 6. Manual testing checklist
@@ -128,29 +118,42 @@ export async function assertNoHorizontalScroll(page: Page) {
 ```
 Chrome devtools — Device toolbar
 
-[ ] Set to "iPhone SE" (375×667) — grid fits, picker visible
-[ ] Set to "Galaxy S20" (360×800) — grid fits, picker visible
-[ ] Set to "iPad Air" (820×1180) — layout centered
+[ ] Set to "iPhone SE" (375×667) — check layout
+[ ] Set to "Galaxy S20" (360×800) — check layout
+[ ] Set to "iPad Air" (820×1180) — check layout
 [ ] Responsive mode at 320px — nothing overflows
 [ ] Responsive mode at 1440px — content centered, not stretched
 
 Touch simulation
 
-[ ] Cells respond to tap
-[ ] Number picker responds to tap
+[ ] All buttons respond to tap (not just hover)
 [ ] No accidental double-tap zoom
+[ ] No 300ms tap delay
 
 Keyboard navigation (desktop)
 
-[ ] Tab into the board
-[ ] Arrow keys navigate between cells
-[ ] Number keys 1–9 fill selected cell
-[ ] Delete/Backspace clears selected cell
-[ ] Focus ring visible
+[ ] Tab through all interactive elements in logical order
+[ ] Focus ring visible on all focused elements
+[ ] Enter/Space activates buttons
 
-Sudoku UX
+Safari (if available)
 
-[ ] Given cells cannot be edited
-[ ] Error cells are visually distinct
-[ ] Completing the board triggers the win screen
+[ ] Run on Safari — check for CSS gaps
+[ ] Check that `dvh` units work
+```
+
+---
+
+## 7. Capacitor verification (before PR if native files changed)
+
+If any of these changed, run the Capacitor sync check before PR:
+
+- `capacitor.config.ts`
+- `src/services/` files that use Capacitor plugins
+- Any `@capacitor/*` imports
+
+```bash
+npm run build
+npx cap sync android
+npx cap open android
 ```

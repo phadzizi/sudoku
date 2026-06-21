@@ -61,7 +61,16 @@ All visual values live in `src/styles/tokens.css`. Never hard-code a color, spac
 }
 ```
 
-### Border radius, shadows, animation
+### Border radius
+
+```css
+:root {
+  --radius-sm: 6px; --radius-md: 12px; --radius-lg: 16px;
+  --radius-xl: 24px; --radius-full: 9999px;
+}
+```
+
+### Shadows and animation
 
 See `src/styles/tokens.css` for full values.
 
@@ -75,7 +84,7 @@ tablet:  640px+       → @media (min-width: 640px)
 desktop: 1024px+      → @media (min-width: 1024px)
 ```
 
-Minimum supported width: **320px**. The 9×9 Sudoku grid must fit within 320px — use fluid sizing (`min(100%, Xpx)`) rather than fixed widths.
+Minimum supported width: **320px**.
 
 ---
 
@@ -83,7 +92,13 @@ Minimum supported width: **320px**. The 9×9 Sudoku grid must fit within 320px �
 
 Every interactive element must have a minimum tap target of **44×44px**.
 
-Sudoku cells are an exception — the grid must fit the screen. Cells should be as large as possible within the available space but are allowed to be smaller than 44×44px. The number picker buttons (1–9) must always meet the 44×44px minimum.
+If the visual element is smaller, use padding to grow the tappable area:
+
+```css
+.icon-button {
+  padding: var(--space-3);
+}
+```
 
 ---
 
@@ -98,6 +113,19 @@ Padding:     var(--space-4) var(--space-8)
 Radius:      var(--radius-full)
 Min height:  52px
 Min width:   160px
+Hover:       background → var(--color-primary-dark), translateY(-1px)
+Active:      translateY(0), opacity 0.9
+Disabled:    background → var(--color-text-disabled), cursor not-allowed
+Transition:  var(--duration-fast) var(--ease-out)
+```
+
+### Surface panel
+
+```
+Background:  var(--color-surface)
+Padding:     var(--space-6)
+Radius:      var(--radius-lg)
+Shadow:      var(--shadow-md)
 ```
 
 ### GameLayout (wraps every screen)
@@ -107,25 +135,17 @@ Max width: 480px, centered horizontally
 Padding:   var(--space-4) on mobile, var(--space-8) on desktop
 Background: var(--color-bg)
 Min height: 100dvh
+Display:   flex, column
 ```
 
-### SudokuGrid
+### FeedbackBadge
 
 ```
-Display:   grid, 9 columns
-Border:    3×3 box borders thicker than cell borders (use border or outline)
-Cell selected:    background var(--color-primary) at low opacity
-Cell given:       font-weight var(--font-bold), color var(--color-text)
-Cell user-filled: font-weight var(--font-normal), color var(--color-primary-light)
-Cell error:       color var(--color-error), border var(--color-error)
-```
-
-### NumberPicker
-
-```
-Display:   grid, 9 buttons (1–9) + erase button
-Each button: min 44×44px, var(--color-surface-raised) background
-Selected number: var(--color-primary) background
+Correct:  background var(--color-success), white text
+Wrong:    background var(--color-error), white text
+Padding:  var(--space-2) var(--space-4)
+Radius:   var(--radius-full)
+Font:     var(--font-semibold)
 ```
 
 ---
@@ -133,60 +153,62 @@ Selected number: var(--color-primary) background
 ## 5. Animation rules
 
 **What to animate:**
-- Cell selection (instant background change, no animation needed)
-- Correct completion (brief scale-up or pulse on the board)
-- Error shake (horizontal shake on wrong fill — optional)
+
+- Button press feedback (scale down 0.96, fast)
+- Correct answer feedback (scale up 1.06, spring ease)
+- Wrong answer feedback (horizontal shake, 3 iterations)
 - Screen transitions (fade, 250ms)
 
 **What NOT to animate:**
-- Individual cell value changes
-- Timer updates
-- Anything that loops indefinitely
 
-**Motion safety:** Wrap all non-essential animations in `@media (prefers-reduced-motion: reduce)`.
+- Layout reflows
+- Text content changes
+- Anything that loops indefinitely unless it pauses when off-screen
+
+**Motion safety:**
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
 
 ---
 
 ## 6. Accessibility rules (WCAG 2.1 AA)
 
-| Rule           | Requirement                                                          |
-| -------------- | -------------------------------------------------------------------- |
-| Color contrast | Text on bg: minimum 4.5:1 ratio                                      |
-| Focus visible  | All interactive elements must show a visible focus ring              |
-| Focus ring     | `outline: 2px solid var(--color-primary-light); outline-offset: 2px` |
-| Button semantics | Use `<button>` not `<div onClick>`                                 |
-| Cell selection | Arrow keys must navigate between cells                               |
-| Number entry   | Number keys (1–9) must fill selected cell; Delete/Backspace clears  |
-| Error state    | `aria-invalid="true"` on error cells                                 |
-| Game status    | Screen reader must be told when game completes (`aria-live`)         |
+| Rule             | Requirement                                                          |
+| ---------------- | -------------------------------------------------------------------- |
+| Color contrast   | Text on bg: minimum 4.5:1 ratio                                      |
+| Focus visible    | All interactive elements must show a visible focus ring              |
+| Focus ring style | `outline: 2px solid var(--color-primary-light); outline-offset: 2px` |
+| Button semantics | Use `<button>` not `<div onClick>`                                   |
+| Icon buttons     | Must have `aria-label`                                               |
+| State changes    | Screen reader must be told when state changes (`aria-live="polite"`) |
+| Color only       | Never use color as the only indicator (add icon, shape, or text)     |
+| Disabled inputs  | Use `disabled` attribute, not just `pointer-events: none`            |
 
 ---
 
 ## 7. Dark theme
 
-The app uses a dark theme by default (`--color-bg: #0F172A`). All components must look correct on the dark background.
+The app uses a dark theme by default (`--color-bg: #0F172A`). Do not add a light theme toggle. All components must look correct on the dark background.
 
 ---
 
-## 8. Sudoku-specific grid rules
-
-- **Box borders:** The 3×3 sub-grid borders must be visually distinct from cell borders. Use `2px` for box borders and `1px` for cell borders.
-- **Given vs. user cells:** Given (puzzle) numbers are bold; user-entered numbers are lighter or a different color. This makes it immediately clear which cells can be changed.
-- **Selected row/column/box highlighting:** The row, column, and 3×3 box of the selected cell should be subtly highlighted — this is standard Sudoku UX and significantly aids gameplay.
-- **Same-number highlighting:** All cells containing the same number as the selected cell should be highlighted.
-
----
-
-## 9. Agent UI review checklist
+## 8. Agent UI review checklist
 
 After implementing UI, the agent must check each item before PR:
 
 ```
 Layout
 [ ] All content visible at 320px width without horizontal scroll
-[ ] Sudoku grid fits at 320px — no horizontal overflow
 [ ] All content visible at 1280px width (no awkward stretching)
-[ ] GameLayout max-width respected on desktop
+[ ] No content clipped by device notch or status bar
+[ ] GameLayout max-width respected; screen doesn't sprawl on desktop
 
 Tokens
 [ ] No hard-coded hex colors in component CSS
@@ -194,25 +216,25 @@ Tokens
 [ ] All new interactive elements use token-based transitions
 
 Touch & interaction
-[ ] Number picker buttons are min 44×44px
-[ ] Cells are large enough to tap accurately on mobile
+[ ] Every tappable element is min 44×44px
 [ ] No hover-only interactions
 [ ] Active/pressed state visible on all buttons
+[ ] Disabled state visually distinct
+
+Typography
+[ ] No text smaller than var(--text-sm) = 14px
+
+Animation
+[ ] prefers-reduced-motion respected
+[ ] No animation loops indefinitely
+[ ] All timers and animation callbacks cleaned up on unmount
 
 Accessibility
 [ ] All buttons are <button> elements
-[ ] Cells are navigable by keyboard (arrow keys)
-[ ] Number keys fill the selected cell
-[ ] Error cells use aria-invalid
-[ ] Game completion announced via aria-live
+[ ] Icon buttons have aria-label
+[ ] State changes announced via aria-live
 [ ] Focus ring visible on keyboard navigation
-
-Sudoku grid
-[ ] Box borders visually distinct from cell borders
-[ ] Given numbers visually distinct from user-entered numbers
-[ ] Selected cell highlighted
-[ ] Row/column/box of selected cell highlighted
-[ ] Error cells highlighted with more than color alone
+[ ] Color not used as sole indicator
 
 Consistency
 [ ] Uses GameLayout wrapper

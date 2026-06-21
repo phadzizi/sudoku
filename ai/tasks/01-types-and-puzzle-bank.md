@@ -1,22 +1,73 @@
-# Task 01 — Types + Puzzle Bank
+# Task 01 — Types + Puzzle Generator + Bank
 
 ## Overview
 
-Define all TypeScript types and create the bundled puzzle bank. No logic, no UI. This is the data foundation every other task builds on.
+Define all TypeScript types, implement a verified Sudoku generator, and produce a bundled puzzle bank of 300 puzzles (100 per difficulty) via a one-time generation script. The generator algorithm must be thoroughly unit-tested before it is used to produce the bank.
+
+## Decisions
+
+- Puzzles are generated programmatically using a backtracking algorithm, not hand-crafted
+- The generator runs once via `scripts/generate-puzzles.mjs`; output is committed as `src/sudoku/puzzles.ts`
+- The solver and uniqueness checker also live in `sudoku.logic.ts` — they are used at runtime to validate user solutions and can be reused for future puzzle generation
 
 ## Acceptance criteria
 
-- [ ] `src/sudoku/sudoku.types.ts` defines: `Difficulty`, `GameStatus`, `Board`, `CellState`, `GameState`, `SavedGame`, `BestScore`
-- [ ] `CellState` has: `value: number`, `given: boolean`, `notes: number[]`, `error: boolean`
-- [ ] `SavedGame` has: `board: CellState[][]`, `solution: Board`, `elapsedSeconds: number`, `mistakes: number`, `hintsUsed: number`, `undoStack: CellState[][][]`
-- [ ] `src/sudoku/puzzles.ts` exports `PUZZLES: Record<Difficulty, Puzzle[]>` where `Puzzle = { clues: string; solution: string }` (81-char strings, `'0'` = empty)
-- [ ] 100 puzzles per difficulty (300 total)
-- [ ] All solutions are valid — each row, column, and 3×3 box contains 1–9 exactly once
-- [ ] Easy puzzles have 36–50 givens, medium 27–35, hard 22–26
+### Types (`sudoku.types.ts`)
+- [ ] `Difficulty = 'easy' | 'medium' | 'hard'`
+- [ ] `GameStatus = 'idle' | 'playing' | 'paused' | 'complete'`
+- [ ] `Board = number[][]` (9×9, 0 = empty)
+- [ ] `CellState = { value: number; given: boolean; notes: number[]; error: boolean }`
+- [ ] `GameState = { status, difficulty, board: CellState[][], solution: Board, selectedCell: [number, number] | null, elapsedSeconds: number, mistakes: number, hintsUsed: number }`
+- [ ] `SavedGame = { board: CellState[][], solution: Board, elapsedSeconds: number, mistakes: number, hintsUsed: number, undoStack: CellState[][][] }`
+- [ ] `BestScore = { score: number; achievedAt: string }`
+- [ ] `Puzzle = { clues: string; solution: string }` (81-char strings, `'0'` = empty)
+
+### Generator algorithm (`sudoku.logic.ts`)
+- [ ] `generateSolvedBoard(rng?)` — produces a fully solved valid 9×9 board using backtracking with random shuffling; fills the three diagonal 3×3 boxes first (they are independent), then solves the rest
+- [ ] `countSolutions(board, limit)` — backtracking solver that counts solutions up to `limit`; stops early once `limit` is reached (used to verify uniqueness)
+- [ ] `generatePuzzle(difficulty, rng?)` — calls `generateSolvedBoard`, then removes cells one at a time in random order, checking after each removal that `countSolutions(board, 2) === 1`; stops when the given-cell count for the difficulty is reached
+  - Easy: 36–50 givens
+  - Medium: 27–35 givens
+  - Hard: 22–26 givens
+- [ ] `puzzleToString(board)` — serialises a Board to an 81-char string
+- [ ] `stringToBoard(s)` — parses an 81-char string to a Board
+
+### Generator unit tests (`sudoku.test.ts`) — must be comprehensive
+- [ ] `generateSolvedBoard` produces a valid board (all rows, cols, boxes contain 1–9 exactly once)
+- [ ] `generateSolvedBoard` with fixed `rng` is deterministic
+- [ ] `generateSolvedBoard` with different `rng` seeds produces different boards
+- [ ] `countSolutions` returns 0 for an unsolvable board
+- [ ] `countSolutions` returns 1 for a board with a unique solution
+- [ ] `countSolutions` returns 2 (stops early) for an under-constrained board
+- [ ] `generatePuzzle('easy')` — given count is 36–50
+- [ ] `generatePuzzle('medium')` — given count is 27–35
+- [ ] `generatePuzzle('hard')` — given count is 22–26
+- [ ] `generatePuzzle` — solution satisfies all Sudoku rules (rows, cols, boxes)
+- [ ] `generatePuzzle` — returned puzzle has exactly one solution (`countSolutions(clues, 2) === 1`)
+- [ ] `generatePuzzle` — removing any single remaining given creates a puzzle with 2+ solutions (spot-check 3 random givens per difficulty to verify the uniqueness constraint was enforced correctly)
+- [ ] `puzzleToString` / `stringToBoard` are inverses of each other
+- [ ] All generator tests use injectable `rng` for determinism
+
+### Generation script (`scripts/generate-puzzles.mjs`)
+- [ ] Pure Node.js script (no extra dependencies beyond the project)
+- [ ] Imports generator logic from compiled output or runs via `tsx` / `ts-node`
+- [ ] Generates 100 easy + 100 medium + 100 hard puzzles
+- [ ] Validates every generated puzzle before writing: runs `countSolutions(clues, 2) === 1` — logs and skips any that fail
+- [ ] Writes `src/sudoku/puzzles.ts` exporting `PUZZLES: Record<Difficulty, Puzzle[]>`
+- [ ] Logs progress: difficulty, count, time taken
+- [ ] Add `"generate:puzzles"` script to `package.json`
+
+### Committed puzzle bank (`src/sudoku/puzzles.ts`)
+- [ ] 100 puzzles per difficulty, generated by running the script
+- [ ] File is committed — agents in later tasks do not need to regenerate it
 
 ## Files
 
 ```
-src/sudoku/sudoku.types.ts   ← create
-src/sudoku/puzzles.ts        ← create
+src/sudoku/sudoku.types.ts       ← create
+src/sudoku/sudoku.logic.ts       ← create (generator + solver only; game logic added in Task 02)
+src/sudoku/sudoku.test.ts        ← create (generator tests only)
+src/sudoku/puzzles.ts            ← generate and commit
+scripts/generate-puzzles.mjs     ← create
+package.json                     ← add generate:puzzles script
 ```

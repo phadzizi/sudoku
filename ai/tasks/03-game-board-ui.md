@@ -17,8 +17,8 @@ Render the 9×9 board with cell selection, conflict highlighting, and visual dif
 - [ ] Clicking a non-given cell selects it; clicking a given cell selects it (for reference) but does not allow editing
 - [ ] `data-testid="sudoku-board"` on the grid; `data-testid="cell-{row}-{col}"` on each cell
 - [ ] Grid fits within 320px viewport without horizontal scroll — use fluid sizing
-- [ ] `src/App.tsx` has a route `/game/:difficulty` that renders `SudokuGame`
-- [ ] `src/pages/HomePage.tsx` has temporary links to `/game/easy`, `/game/medium`, `/game/hard`
+- [ ] `src/App.tsx` has a route `/game/:difficulty` that renders `SudokuGame` — **temporary scaffold, replaced in Task 07**
+- [ ] `src/pages/HomePage.tsx` has temporary plain links to `/game/easy`, `/game/medium`, `/game/hard` — **temporary scaffold, replaced in Task 07**
 
 ## Files
 

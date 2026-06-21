@@ -1,6 +1,6 @@
 # AGENTS.md
 
-You are an AI coding agent working on a cross-platform Sudoku app built with React, TypeScript, Capacitor, Vite, Zustand, Vitest, React Testing Library, and Playwright.
+You are an AI coding agent working on a cross-platform app built with React, TypeScript, Capacitor, Vite, Zustand, Vitest, React Testing Library, and Playwright.
 
 ## Core rule
 
@@ -22,7 +22,7 @@ For every feature request, follow this exact workflow:
 
 For every new feature, create or update as needed:
 
-- Game logic (pure functions)
+- Logic (pure functions)
 - UI components
 - Tests
 - Routing
@@ -42,24 +42,19 @@ For every new feature, create or update as needed:
 
 ```
 src/
-  sudoku/
-    sudoku.types.ts       ← types only, no logic
-    sudoku.logic.ts       ← pure functions, no React
-    sudoku.test.ts        ← unit tests
-    SudokuGame.tsx        ← UI only
-    index.ts              ← re-exports
-  components/             ← shared UI
-  pages/                  ← route-level screens
-  store/                  ← Zustand stores
-  services/               ← storage, sound, haptics
-  styles/                 ← tokens.css, global.css
+  sudoku/           ← feature module
+  components/       ← shared UI
+  pages/            ← route-level screens
+  store/            ← Zustand stores
+  services/         ← storage, sound, haptics
+  styles/           ← tokens.css, global.css
 ```
 
 ## Quality gates — run before every PR
 
 ```bash
 npm run check          # format + lint + typecheck + unit tests + build
-npm run test:e2e       # Playwright at all 4 viewports (mobile-sm, mobile-lg, tablet, desktop)
+npm run test:e2e       # Playwright at all 4 viewports
 ```
 
 If `test:e2e` fails with a missing shared library error, run `sudo npx playwright install-deps chromium` once, then retry.
@@ -87,7 +82,6 @@ Before creating a PR, answer each item honestly:
 - No hover-only interactions?
 - Focus ring visible?
 - `prefers-reduced-motion` respected?
-- Uses shared components (GameLayout, PrimaryButton, ScoreDisplay)?
 
 **Mobile & web — run the checklist in `ai/MOBILE_WEB_TESTING.md` section 9**
 
@@ -120,7 +114,7 @@ chore/[short-description]
 ## Commit style
 
 ```
-feat: add sudoku puzzle generator
-fix: correct timer cleanup on game exit
+feat: add puzzle generator with uniqueness validation
+fix: clear timer on component unmount
 chore: add vitest config
 ```

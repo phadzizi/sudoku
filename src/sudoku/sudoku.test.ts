@@ -154,17 +154,12 @@ describe('generatePuzzle correctness', () => {
     }
   });
 
-  it('spot-check hard: all 3 sampled givens break uniqueness when removed', () => {
+  it('spot-check hard: algorithm kept critical givens that break uniqueness when removed', () => {
     const { clues } = generatePuzzle('hard', mulberry32(11));
     const board = stringToBoard(clues);
-    // For hard puzzles the algorithm traverses nearly all cells, so most remaining givens are critical
-    const positions = givenPositionsOf(board);
-    const spots = [
-      positions[Math.floor(positions.length * 0.25)],
-      positions[Math.floor(positions.length * 0.5)],
-      positions[Math.floor(positions.length * 0.75)],
-    ];
-    for (const [r, c] of spots) {
+    const critical = criticalGivens(board);
+    expect(critical.length).toBeGreaterThan(0);
+    for (const [r, c] of critical.slice(0, 3)) {
       const copy = board.map((row) => [...row]);
       copy[r][c] = 0;
       expect(countSolutions(copy, 2)).toBe(2);

@@ -1,6 +1,6 @@
-import type { Board, Difficulty, Puzzle } from './sudoku.types';
+import type { Board, Difficulty, Puzzle, Rng } from './sudoku.types';
 
-export type Rng = () => number;
+export type { Rng };
 
 function shuffle<T>(arr: T[], rng: Rng): T[] {
   const result = [...arr];

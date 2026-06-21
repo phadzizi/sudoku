@@ -40,3 +40,5 @@ export type Puzzle = {
   clues: string;
   solution: string;
 };
+
+export type Rng = () => number;

@@ -1,0 +1,84 @@
+.board {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  max-width: 450px;
+  margin: var(--space-4) auto 0;
+  border: 2px solid var(--color-text);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+
+  /* Highlight palette — referenced by child cell states */
+  --cell-bg-selected: color-mix(in srgb, var(--color-primary) 35%, transparent);
+  --cell-bg-same: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+/* ─── Base cell ─────────────────────────────────────────── */
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(var(--text-xs), 3.5vw, var(--text-base));
+  font-weight: var(--font-normal);
+  line-height: 1;
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+/* ─── Box borders (override after .cell) ────────────────── */
+
+.boxRight {
+  border-right-width: 2px;
+  border-right-color: var(--color-text-muted);
+}
+
+.boxBottom {
+  border-bottom-width: 2px;
+  border-bottom-color: var(--color-text-muted);
+}
+
+/* Remove outer edges — container border handles them */
+
+.lastCol {
+  border-right: none;
+}
+
+.lastRow {
+  border-bottom: none;
+}
+
+/* ─── Value states ───────────────────────────────────────── */
+
+.given {
+  font-weight: var(--font-bold);
+}
+
+.userFilled {
+  color: var(--color-primary-light);
+}
+
+/* Error: compound selector wins over .boxRight / .boxBottom */
+.cell.error {
+  color: var(--color-error);
+  border-right-color: var(--color-error);
+  border-bottom-color: var(--color-error);
+}
+
+/* ─── Selection highlight states ────────────────────────── */
+
+.selected {
+  background-color: var(--cell-bg-selected);
+}
+
+.peer {
+  background-color: var(--color-surface-raised);
+}
+
+.sameValue {
+  background-color: var(--cell-bg-same);
+}

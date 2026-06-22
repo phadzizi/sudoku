@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import GameLayout from '../components/GameLayout';
-import { applyHint, loadPuzzle, setCellValue, toggleNote, validateBoard } from './sudoku.logic';
-import type { Board, CellState, Difficulty } from './sudoku.types';
+import { getBestScore, setBestScore as storeBestScore } from '../services/storage';
+import {
+  applyHint,
+  calculateScore,
+  isBoardComplete,
+  loadPuzzle,
+  setCellValue,
+  toggleNote,
+  validateBoard,
+} from './sudoku.logic';
+import type { BestScore, Board, CellState, Difficulty } from './sudoku.types';
 import styles from './SudokuGame.module.css';
 
 function toDifficulty(s: string | undefined): Difficulty {
@@ -57,10 +66,10 @@ function cellClassName(
 
 export default function SudokuGame() {
   const { difficulty } = useParams<{ difficulty: string }>();
+  const navigate = useNavigate();
+  const diff = toDifficulty(difficulty);
 
-  const [gameData] = useState<{ board: CellState[][]; solution: Board }>(() =>
-    loadPuzzle(toDifficulty(difficulty))
-  );
+  const [gameData] = useState<{ board: CellState[][]; solution: Board }>(() => loadPuzzle(diff));
   const [board, setBoard] = useState<CellState[][]>(gameData.board);
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
   const [notesMode, setNotesMode] = useState(false);
@@ -68,6 +77,10 @@ export default function SudokuGame() {
   const [mistakes, setMistakes] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [isComplete, setIsComplete] = useState(false);
+  const [finalScore, setFinalScore] = useState(0);
+  const [isNewBest, setIsNewBest] = useState(false);
+  const [bestRecord, setBestRecord] = useState<BestScore | null>(() => getBestScore(diff));
 
   const timerStartedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -84,6 +97,24 @@ export default function SudokuGame() {
     timerStartedRef.current = true;
     timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
   }, []);
+
+  // Updated each render so handlers always read the latest state values
+  const handleCompletionRef = useRef<() => void>(() => {});
+  handleCompletionRef.current = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    const score = calculateScore(diff, elapsedSeconds, mistakes, hintsUsed);
+    setFinalScore(score);
+    setIsComplete(true);
+    const current = getBestScore(diff);
+    if (current === null || score > current.score) {
+      storeBestScore(diff, score);
+      setBestRecord({ score, achievedAt: new Date().toISOString() });
+      setIsNewBest(true);
+    }
+  };
 
   // Derived — used for button disabled states and highlight logic
   const [sr, sc] = selectedCell ?? [-1, -1];
@@ -116,11 +147,13 @@ export default function SudokuGame() {
         setBoard(toggleNote(board, row, col, num));
       } else {
         if (cell.value === num) return;
+        const next = validateBoard(setCellValue(board, row, col, num));
         setUndoStack((s) => [...s, board]);
-        setBoard(validateBoard(setCellValue(board, row, col, num)));
+        setBoard(next);
         if (num !== gameData.solution[row][col]) {
           setMistakes((m) => m + 1);
         }
+        if (isBoardComplete(next)) handleCompletionRef.current();
       }
     },
     [selectedCell, board, notesMode, gameData]
@@ -138,9 +171,11 @@ export default function SudokuGame() {
     const cell = board[row][col];
     if (cell.given) return;
     if (cell.value === gameData.solution[row][col]) return;
+    const next = validateBoard(applyHint(board, gameData.solution, row, col));
     setUndoStack((s) => [...s, board]);
-    setBoard(applyHint(board, gameData.solution, row, col));
+    setBoard(next);
     setHintsUsed((h) => h + 1);
+    if (isBoardComplete(next)) handleCompletionRef.current();
   }, [selectedCell, board, gameData]);
 
   useEffect(() => {
@@ -182,6 +217,52 @@ export default function SudokuGame() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [startTimer, pick, undo, hint]);
+
+  if (isComplete) {
+    return (
+      <GameLayout>
+        <div className={styles.completeScreen} data-testid="game-complete-screen">
+          <h2 className={styles.completeTitle}>{isNewBest ? 'New Best!' : 'Puzzle Complete!'}</h2>
+          <div className={styles.completeStats}>
+            <div className={styles.completeStat}>
+              <span className={styles.completeStatLabel}>Time</span>
+              <span className={styles.completeStatValue}>{formatTime(elapsedSeconds)}</span>
+            </div>
+            <div className={styles.completeStat}>
+              <span className={styles.completeStatLabel}>Score</span>
+              <span
+                className={`${styles.completeStatValue}${isNewBest ? ` ${styles.newBestValue}` : ''}`}
+              >
+                {finalScore}
+              </span>
+            </div>
+            <div className={styles.completeStat}>
+              <span className={styles.completeStatLabel}>Mistakes</span>
+              <span className={styles.completeStatValue}>{mistakes}</span>
+            </div>
+            <div className={styles.completeStat}>
+              <span className={styles.completeStatLabel}>Hints</span>
+              <span className={styles.completeStatValue}>{hintsUsed}</span>
+            </div>
+            {bestRecord && (
+              <div className={styles.completeStat}>
+                <span className={styles.completeStatLabel}>Best score</span>
+                <span className={styles.completeStatValue}>{bestRecord.score}</span>
+              </div>
+            )}
+          </div>
+          <div className={styles.completeActions}>
+            <button className={styles.primaryBtn} onClick={() => navigate(0)}>
+              Play Again
+            </button>
+            <button className={styles.secondaryBtn} onClick={() => navigate('/')}>
+              Change Difficulty
+            </button>
+          </div>
+        </div>
+      </GameLayout>
+    );
+  }
 
   return (
     <GameLayout>

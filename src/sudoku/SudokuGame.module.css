@@ -192,3 +192,93 @@
 .pickerBtn:disabled {
   color: var(--color-text-disabled);
 }
+
+/* ─── Game complete screen ──────────────────────────────── */
+
+.completeScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: var(--space-6);
+  padding: var(--space-6) 0;
+  text-align: center;
+}
+
+.completeTitle {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+}
+
+.completeStats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 300px;
+}
+
+.completeStat {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-base);
+}
+
+.completeStatLabel {
+  color: var(--color-text-muted);
+}
+
+.completeStatValue {
+  font-weight: var(--font-medium);
+}
+
+.newBestValue {
+  color: var(--color-success);
+  font-weight: var(--font-bold);
+}
+
+.completeActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 300px;
+}
+
+.primaryBtn {
+  width: 100%;
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary);
+  color: var(--color-text);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.primaryBtn:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.secondaryBtn {
+  width: 100%;
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.secondaryBtn:hover {
+  background-color: var(--color-surface-raised);
+}

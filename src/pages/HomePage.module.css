@@ -1,0 +1,103 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: var(--space-6);
+  padding: var(--space-6) 0;
+}
+
+.title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+}
+
+.difficultyList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 280px;
+}
+
+.difficultyBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.difficultyBtn:hover {
+  background-color: var(--color-surface-raised);
+}
+
+.resumeBadge {
+  font-size: var(--text-xs);
+  color: var(--color-primary-light);
+  font-weight: var(--font-normal);
+}
+
+.resumePrompt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+}
+
+.resumePromptLabel {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.resumePromptActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.resumeBtn {
+  flex: 1;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-primary);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.resumeBtn:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.newGameBtn {
+  flex: 1;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-raised);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.newGameBtn:hover {
+  background-color: var(--color-border);
+}

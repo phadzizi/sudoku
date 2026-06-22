@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import GameLayout from '../components/GameLayout';
-import { getBestScore, setBestScore as storeBestScore } from '../services/storage';
+import { clearSavedGame, getBestScore, getSavedGame, setBestScore as storeBestScore, setSavedGame } from '../services/storage';
 import {
   applyHint,
   calculateScore,
@@ -69,14 +69,29 @@ export default function SudokuGame() {
   const navigate = useNavigate();
   const diff = toDifficulty(difficulty);
 
-  const [gameData] = useState<{ board: CellState[][]; solution: Board }>(() => loadPuzzle(diff));
-  const [board, setBoard] = useState<CellState[][]>(gameData.board);
+  // Initialise from a saved game if one exists, otherwise start fresh
+  const [init] = useState<{
+    board: CellState[][];
+    solution: Board;
+    elapsedSeconds: number;
+    mistakes: number;
+    hintsUsed: number;
+    undoStack: CellState[][][];
+  }>(() => {
+    const saved = getSavedGame(diff);
+    if (saved) return saved;
+    const { board, solution } = loadPuzzle(diff);
+    return { board, solution, elapsedSeconds: 0, mistakes: 0, hintsUsed: 0, undoStack: [] };
+  });
+
+  const [solution] = useState<Board>(init.solution);
+  const [board, setBoard] = useState<CellState[][]>(init.board);
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
   const [notesMode, setNotesMode] = useState(false);
-  const [undoStack, setUndoStack] = useState<CellState[][][]>([]);
-  const [mistakes, setMistakes] = useState(0);
-  const [hintsUsed, setHintsUsed] = useState(0);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [undoStack, setUndoStack] = useState<CellState[][][]>(init.undoStack);
+  const [mistakes, setMistakes] = useState(init.mistakes);
+  const [hintsUsed, setHintsUsed] = useState(init.hintsUsed);
+  const [elapsedSeconds, setElapsedSeconds] = useState(init.elapsedSeconds);
   const [isComplete, setIsComplete] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [isNewBest, setIsNewBest] = useState(false);
@@ -84,13 +99,24 @@ export default function SudokuGame() {
 
   const timerStartedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Stable refs for values read inside debounced save / completion callbacks
+  const initElapsedRef = useRef(init.elapsedSeconds);
+  const isMountedRef = useRef(false);
+  const elapsedSecondsRef = useRef(elapsedSeconds);
+  elapsedSecondsRef.current = elapsedSeconds;
 
-  useEffect(
-    () => () => {
+  // Auto-start timer on mount when resuming an in-progress game;
+  // also cleans up the interval on unmount.
+  useEffect(() => {
+    if (initElapsedRef.current > 0 && !timerStartedRef.current) {
+      timerStartedRef.current = true;
+      timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
+    }
+    return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-    },
-    []
-  );
+    };
+  }, []); // all accessed variables are refs — stable, no deps needed
 
   const startTimer = useCallback(() => {
     if (timerStartedRef.current) return;
@@ -98,13 +124,19 @@ export default function SudokuGame() {
     timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
   }, []);
 
-  // Updated each render so handlers always read the latest state values
+  // Updated each render so handlers always close over the latest state values
   const handleCompletionRef = useRef<() => void>(() => {});
   handleCompletionRef.current = () => {
+    // Cancel any pending debounced save before clearing
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    clearSavedGame(diff);
     const score = calculateScore(diff, elapsedSeconds, mistakes, hintsUsed);
     setFinalScore(score);
     setIsComplete(true);
@@ -116,11 +148,35 @@ export default function SudokuGame() {
     }
   };
 
+  // Auto-save after every cell change, debounced 500ms.
+  // Skip the initial mount fire (board hasn't changed yet).
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      return;
+    }
+    if (isComplete) return;
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      setSavedGame(diff, {
+        board,
+        solution,
+        elapsedSeconds: elapsedSecondsRef.current,
+        mistakes,
+        hintsUsed,
+        undoStack,
+      });
+    }, 500);
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, [board, mistakes, hintsUsed, undoStack, isComplete, diff, solution]);
+
   // Derived — used for button disabled states and highlight logic
   const [sr, sc] = selectedCell ?? [-1, -1];
   const sel = selectedCell ? board[sr][sc] : null;
   const canPick = sel !== null && !sel.given;
-  const canHint = sel !== null && !sel.given && sel.value !== gameData.solution[sr][sc];
+  const canHint = sel !== null && !sel.given && sel.value !== solution[sr][sc];
   const selectedValue = sel?.value ?? 0;
 
   const pick = useCallback(
@@ -150,13 +206,13 @@ export default function SudokuGame() {
         const next = validateBoard(setCellValue(board, row, col, num));
         setUndoStack((s) => [...s, board]);
         setBoard(next);
-        if (num !== gameData.solution[row][col]) {
+        if (num !== solution[row][col]) {
           setMistakes((m) => m + 1);
         }
         if (isBoardComplete(next)) handleCompletionRef.current();
       }
     },
-    [selectedCell, board, notesMode, gameData]
+    [selectedCell, board, notesMode, solution]
   );
 
   const undo = useCallback(() => {
@@ -170,13 +226,13 @@ export default function SudokuGame() {
     const [row, col] = selectedCell;
     const cell = board[row][col];
     if (cell.given) return;
-    if (cell.value === gameData.solution[row][col]) return;
-    const next = validateBoard(applyHint(board, gameData.solution, row, col));
+    if (cell.value === solution[row][col]) return;
+    const next = validateBoard(applyHint(board, solution, row, col));
     setUndoStack((s) => [...s, board]);
     setBoard(next);
     setHintsUsed((h) => h + 1);
     if (isBoardComplete(next)) handleCompletionRef.current();
-  }, [selectedCell, board, gameData]);
+  }, [selectedCell, board, solution]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
